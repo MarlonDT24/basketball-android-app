@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val userDao = AppDatabase.getInstance(application)
+    private val userDao = AppDatabase.getInstance(application).userDao()
 
     private val _authState = MutableLiveData<AuthState>()
     val authState: LiveData<AuthState> = _authState
@@ -49,7 +49,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 _authState.postValue(AuthState.Loading)
 
-                // Verifica si el usuario ya existe en la BD
                 val existingUser = userDao.userExists(email)
                 if (existingUser > 0) {
                     _authState.postValue(AuthState.Error("El email ya está registrado"))

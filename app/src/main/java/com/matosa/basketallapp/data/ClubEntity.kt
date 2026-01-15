@@ -3,7 +3,7 @@ package com.matosa.basketallapp.data
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-
+@Entity(tableName = "clubs")
 data class ClubEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,

@@ -7,7 +7,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -15,19 +14,21 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.matosa.basketallapp.data.MatchEntity
 import com.matosa.basketallapp.data.PlayerStatsEntity
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LiveMatchesScreen(navController: NavController) {
+fun LiveMatchesScreen(modifier: Modifier = Modifier) {
     var searchQuery by remember { mutableStateOf("") }
     var selectedMatchId by remember { mutableStateOf<String?>(null) }
 
-    // Datos mock de partidos
     val matches = remember {
         listOf(
             MatchEntity(
@@ -57,11 +58,20 @@ fun LiveMatchesScreen(navController: NavController) {
         )
     }
 
-    // Datos mock de estadísticas de jugadores
     val playerStats = remember {
         listOf(
             PlayerStatsEntity(1, "1", "HUGO GÁLVEZ UR", "CREVILLOR", 19, 5, 2, 3, 28),
-            PlayerStatsEntity(2, "1", "ALEXANDER COLLERNS ZARANDAGDADA", "CREVILLOR", 11, 8, 1, 2, 25),
+            PlayerStatsEntity(
+                2,
+                "1",
+                "ALEXANDER COLLERNS ZARANDAGDADA",
+                "CREVILLOR",
+                11,
+                8,
+                1,
+                2,
+                25
+            ),
             PlayerStatsEntity(3, "1", "VICTOR GALLÉN FERRER", "CREVILLOR", 10, 6, 3, 1, 22),
             PlayerStatsEntity(4, "1", "GUILLEM MAROTO DAVID", "CREVILLOR", 8, 3, 5, 4, 20),
             PlayerStatsEntity(5, "1", "PAU BOVO MONTAÑO", "CREVILLOR", 6, 4, 2, 1, 18),
@@ -76,111 +86,84 @@ fun LiveMatchesScreen(navController: NavController) {
                 it.awayTeam.contains(searchQuery, ignoreCase = true)
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Partidos en Directo",
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = Color.White
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1E3A8A)
-                )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color(0xFF1E3A8A))
+            .padding(16.dp)
+    ) {
+        // Instrucciones
+        Text(
+            text = "Partidos en directo en este momento",
+            color = Color.White,
+            fontSize = 14.sp,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        // Ícono
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .background(Color.White, CircleShape)
+                .align(Alignment.CenterHorizontally),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "📺",
+                fontSize = 40.sp
             )
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color(0xFF1E3A8A))
-                .padding(paddingValues)
-                .padding(16.dp)
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Barra de búsqueda
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = { searchQuery = it },
+            label = { Text("Buscar por club, equipo o categoría") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "Buscar"
+                )
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.White,
+                focusedLabelColor = Color.White,
+                unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
+                unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
+                focusedLeadingIconColor = Color.White,
+                unfocusedLeadingIconColor = Color.White.copy(alpha = 0.7f),
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sección EN DIRECTO
+        Text(
+            text = "EN DIRECTO",
+            color = Color.White,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 12.dp)
+        )
+
+        // Lista de partidos
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Instrucciones
-            Text(
-                text = "Partidos en directo en este momento",
-                color = Color.White,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
-
-            // Ícono
-            Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .background(Color.White, CircleShape)
-                    .align(Alignment.CenterHorizontally),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "📺",
-                    fontSize = 40.sp
+            items(filteredMatches) { match ->
+                MatchCard(
+                    match = match,
+                    playerStats = playerStats.filter { it.matchId == match.id },
+                    isExpanded = selectedMatchId == match.id,
+                    onToggleExpand = {
+                        selectedMatchId = if (selectedMatchId == match.id) null else match.id
+                    }
                 )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Barra de búsqueda
-            OutlinedTextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                label = { Text("Buscar por club, equipo o categoría") },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Buscar"
-                    )
-                },
-                modifier = Modifier.fillMaxWidth(),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Color.White,
-                    focusedLabelColor = Color.White,
-                    unfocusedBorderColor = Color.White.copy(alpha = 0.7f),
-                    unfocusedLabelColor = Color.White.copy(alpha = 0.7f),
-                    focusedLeadingIconColor = Color.White,
-                    unfocusedLeadingIconColor = Color.White.copy(alpha = 0.7f),
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Sección EN DIRECTO
-            Text(
-                text = "EN DIRECTO",
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-
-            // Lista de partidos
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(filteredMatches) { match ->
-                    MatchCard(
-                        match = match,
-                        playerStats = playerStats.filter { it.matchId == match.id },
-                        isExpanded = selectedMatchId == match.id,
-                        onToggleExpand = {
-                            selectedMatchId = if (selectedMatchId == match.id) null else match.id
-                        }
-                    )
-                }
             }
         }
     }
@@ -193,6 +176,8 @@ fun MatchCard(
     isExpanded: Boolean,
     onToggleExpand: () -> Unit
 ) {
+    var selectedTabIndex by remember { mutableStateOf(0) }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -201,13 +186,11 @@ fun MatchCard(
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            // Información del partido
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Equipo local
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
@@ -218,10 +201,7 @@ fun MatchCard(
                             .background(Color(0xFFFF6B35), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "🏀",
-                            fontSize = 20.sp
-                        )
+                        Text(text = "🏀", fontSize = 20.sp)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -232,7 +212,6 @@ fun MatchCard(
                     )
                 }
 
-                // Marcador y tiempo
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -280,7 +259,6 @@ fun MatchCard(
                     }
                 }
 
-                // Equipo visitante
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.weight(1f)
@@ -291,10 +269,7 @@ fun MatchCard(
                             .background(Color(0xFF1E3A8A), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "⚡",
-                            fontSize = 20.sp
-                        )
+                        Text(text = "⚡", fontSize = 20.sp)
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -308,7 +283,6 @@ fun MatchCard(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Información del evento
             Text(
                 text = match.venue ?: "",
                 fontSize = 12.sp,
@@ -323,7 +297,6 @@ fun MatchCard(
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            // Botón para ver partido en directo
             Spacer(modifier = Modifier.height(12.dp))
 
             Row(
@@ -332,9 +305,7 @@ fun MatchCard(
             ) {
                 Button(
                     onClick = onToggleExpand,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF1E3A8A)
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E3A8A)),
                     shape = RoundedCornerShape(20.dp),
                     modifier = Modifier.weight(1f)
                 ) {
@@ -346,85 +317,306 @@ fun MatchCard(
                 }
             }
 
-            // Estadísticas expandibles
             if (isExpanded) {
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Pestañas como en el proyecto
+                // TABS FUNCIONALES
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    TabButton(text = "DETALLES", isSelected = true)
-                    TabButton(text = "ESTADÍSTICA", isSelected = false)
-                    TabButton(text = "CALENDARIO", isSelected = false)
+                    listOf("DETALLES", "ESTADÍSTICA", "CALENDARIO").forEachIndexed { index, title ->
+                        TabButton(
+                            text = title,
+                            isSelected = selectedTabIndex == index,
+                            onClick = { selectedTabIndex = index }
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Estadísticas del partido
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    StatCard("PARTIDOS", "11")
-                    StatCard("VICTORIAS", "3")
-                    StatCard("DERROTAS", "8")
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Tiros del equipo (gráficos circulares simulados)
-                Text(
-                    text = "TIROS DEL EQUIPO",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E3A8A),
-                    modifier = Modifier.align(Alignment.CenterHorizontally)
-                )
-
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    CircularStatCard("T1", "11/15", "73%", Color(0xFF4CAF50))
-                    CircularStatCard("T2", "12/30", "40%", Color(0xFFFF9800))
-                    CircularStatCard("T3", "8/20", "40%", Color(0xFFF44336))
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Jugadores/as
-                Text(
-                    text = "JUGADORES/AS",
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E3A8A)
-                )
-
-                // Cabecera de estadísticas
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text("JUGADOR/A", fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(3f))
-                    Text("PJ", fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.8f))
-                    Text("PT", fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.8f))
-                    Text("MIN", fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                    Text("MIN%", fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                }
-
-                // Lista de jugadores
-                playerStats.forEach { player ->
-                    PlayerStatRow(player)
+                // CONTENIDO SEGÚN TAB SELECCIONADO
+                when (selectedTabIndex) {
+                    0 -> MatchDetailsContent(match)
+                    1 -> MatchStatisticsContent(playerStats)
+                    2 -> MatchCalendarContent(match)
                 }
             }
         }
     }
+}
+
+@Composable
+fun MatchDetailsContent(match: MatchEntity) {
+    Column {
+        Text(
+            text = "INFORMACIÓN DEL PARTIDO",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E3A8A)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        DetailRow("FECHA:", match.matchDate)
+        DetailRow("ESTADO:", match.status.uppercase())
+        DetailRow("CUARTO:", "${match.quarter} - ${match.timeRemaining}")
+        match.venue?.let { DetailRow("PABELLÓN:", it) }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "EQUIPOS",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E3A8A)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("LOCAL", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(match.homeTeam, fontSize = 10.sp, textAlign = TextAlign.Center)
+                Text(match.homeScore.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFFFF6B35))
+            }
+
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("VISITANTE", fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(match.awayTeam, fontSize = 10.sp, textAlign = TextAlign.Center)
+                Text(match.awayScore.toString(), fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A))
+            }
+        }
+    }
+}
+
+@Composable
+fun MatchStatisticsContent(playerStats: List<PlayerStatsEntity>) {
+    Column {
+        // Estadísticas del partido
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            StatCard("PARTIDOS", "18")
+            StatCard("VICTORIAS", "12")
+            StatCard("DERROTAS", "6")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Tiros del equipo
+        Text(
+            text = "TIROS DEL EQUIPO",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E3A8A),
+            modifier = Modifier.align(Alignment.CenterHorizontally)
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            CircularStatCard("T1", "18/25", "72%", Color(0xFF4CAF50))
+            CircularStatCard("T2", "15/32", "47%", Color(0xFFFF9800))
+            CircularStatCard("T3", "8/20", "40%", Color(0xFFF44336))
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "JUGADORES/AS",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E3A8A)
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF1E3A8A))
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("JUGADOR/A", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(2f))
+            Text("PT", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.5f), textAlign = TextAlign.Center)
+            Text("REB", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.5f), textAlign = TextAlign.Center)
+            Text("AST", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.5f), textAlign = TextAlign.Center)
+            Text("MIN", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(0.5f), textAlign = TextAlign.Center)
+        }
+
+        playerStats.forEach { player ->
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(player.playerName, fontSize = 10.sp, modifier = Modifier.weight(2f))
+                Text(player.points.toString(), fontSize = 10.sp, modifier = Modifier.weight(0.5f), textAlign = TextAlign.Center)
+                Text(player.rebounds.toString(), fontSize = 10.sp, modifier = Modifier.weight(0.5f), textAlign = TextAlign.Center)
+                Text(player.assists.toString(), fontSize = 10.sp, modifier = Modifier.weight(0.5f), textAlign = TextAlign.Center)
+                Text(player.minutes.toString(), fontSize = 10.sp, modifier = Modifier.weight(0.5f), textAlign = TextAlign.Center)
+            }
+        }
+    }
+}
+
+@Composable
+fun MatchCalendarContent(match: MatchEntity) {
+    var selectedMonth by remember { mutableStateOf("ENERO") }
+
+    val upcomingMatches = remember {
+        listOf(
+            MatchEntity(
+                id = "next1",
+                homeTeam = match.homeTeam,
+                awayTeam = "CB ALGEMESÍ",
+                homeScore = 0,
+                awayScore = 0,
+                matchDate = "22/01/2026 20:00",
+                status = "PRÓXIMO",
+                venue = "Pabellón Municipal"
+            ),
+            MatchEntity(
+                id = "next2",
+                homeTeam = "BOCAIRENT",
+                awayTeam = match.awayTeam,
+                homeScore = 0,
+                awayScore = 0,
+                matchDate = "25/01/2026 18:30",
+                status = "PRÓXIMO",
+                venue = "Pabellón Bocairent"
+            )
+        )
+    }
+
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(Color(0xFF1E3A8A))
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                contentDescription = "Mes anterior",
+                tint = Color.White,
+                modifier = Modifier.clickable { /* Cambiar mes */ }
+            )
+            Text(
+                text = selectedMonth,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = "Mes siguiente",
+                tint = Color.White,
+                modifier = Modifier.clickable { /* Cambiar mes */ }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            text = "PRÓXIMOS PARTIDOS",
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E3A8A)
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        upcomingMatches.forEach { upcomingMatch ->
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF8F9FA))
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = upcomingMatch.homeTeam,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "VS",
+                            fontSize = 10.sp,
+                            color = Color.Gray
+                        )
+                        Text(
+                            text = upcomingMatch.awayTeam,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.weight(1f),
+                            textAlign = TextAlign.End
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Text(
+                        text = upcomingMatch.matchDate,
+                        fontSize = 10.sp,
+                        color = Color.Gray,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
+
+                    Surface(
+                        color = Color(0xFF1E3A8A),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    ) {
+                        Text(
+                            text = upcomingMatch.status,
+                            color = Color.White,
+                            fontSize = 8.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DetailRow(label: String, value: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF1E3A8A)
+        )
+        Text(
+            text = value,
+            fontSize = 12.sp,
+            color = Color.Black
+        )
+    }
+    Spacer(modifier = Modifier.height(4.dp))
 }
 
 @Composable
@@ -481,46 +673,5 @@ fun CircularStatCard(title: String, fraction: String, percentage: String, color:
             fontSize = 10.sp,
             color = Color.Gray
         )
-    }
-}
-
-@Composable
-fun PlayerStatRow(player: PlayerStatsEntity) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.weight(3f)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(20.dp)
-                    .background(Color(0xFF1E3A8A), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = player.playerName.take(1),
-                    fontSize = 10.sp,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = player.playerName.take(20),
-                fontSize = 10.sp,
-                color = Color.Black
-            )
-        }
-
-        Text(text = "11", fontSize = 10.sp, modifier = Modifier.weight(0.8f))
-        Text(text = player.points.toString(), fontSize = 10.sp, modifier = Modifier.weight(0.8f))
-        Text(text = player.minutes.toString(), fontSize = 10.sp, modifier = Modifier.weight(1f))
-        Text(text = "${player.minutes * 4}%", fontSize = 10.sp, modifier = Modifier.weight(1f))
     }
 }

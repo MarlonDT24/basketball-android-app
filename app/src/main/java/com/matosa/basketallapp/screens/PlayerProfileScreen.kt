@@ -40,7 +40,7 @@ fun PlayerProfileScreen(
     var address by remember { mutableStateOf("") }
     var emergencyContact by remember { mutableStateOf("") }
 
-    // Inicializar campos cuando se carga el perfil
+    // Inicializa los campos cuando se carga el perfil
     LaunchedEffect(profile) {
         playerName = profile.playerName
         teamName = profile.teamName
@@ -53,11 +53,15 @@ fun PlayerProfileScreen(
         emergencyContact = profile.emergencyContact
     }
 
-    // Manejar estado de guardado
+    var showSuccessMessage by remember { mutableStateOf(false) }
+
     LaunchedEffect(saveState) {
         when (saveState) {
             is PlayerProfileViewModel.SaveState.Success -> {
-                // Perfil guardado exitosamente
+                println("Perfil guardado con éxito!")
+                showSuccessMessage = true
+                kotlinx.coroutines.delay(2000)
+                showSuccessMessage = false
                 viewModel.resetSaveState()
             }
             else -> {}
@@ -97,7 +101,6 @@ fun PlayerProfileScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Foto de perfil (placeholder)
             Box(
                 modifier = Modifier
                     .size(120.dp),
@@ -264,13 +267,26 @@ fun PlayerProfileScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
+            if (showSuccessMessage) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFF4CAF50))
+                ) {
+                    Text(
+                        text = "Perfil guardado correctamente",
+                        color = Color.White,
+                        modifier = Modifier.padding(12.dp),
+                        fontSize = 14.sp
+                    )
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             // Botones
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Botón Guardar
                 Button(
                     onClick = {
                         val newProfile = PlayerProfileEntity(
@@ -329,7 +345,6 @@ fun PlayerProfileScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Información adicional
             Text(
                 text = "* Campos obligatorios\nLos datos se guardan localmente en tu dispositivo",
                 fontSize = 12.sp,

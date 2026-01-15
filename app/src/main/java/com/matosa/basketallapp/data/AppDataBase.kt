@@ -6,23 +6,33 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [UserEntity::class],
-    version = 1,
+    entities = [
+        UserEntity::class,
+        ClubEntity::class,
+        CompetitionEntity::class,
+        TeamEntity::class,
+        MatchEntity::class,
+        PlayerStatsEntity::class
+    ],
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
-
     abstract fun userDao(): UserDao
+    abstract fun clubDao(): ClubDao
+    abstract fun matchDao(): MatchDao
     companion object {
         @Volatile
-        private var instance: UserDao? = null
+        private var instance: AppDatabase? = null
 
-        fun getInstance(context: Context): UserDao {
-            return instance ?: Room.databaseBuilder(
-                context,
-                AppDatabase::class.java,
-                "basketball-db"
-            ).build().userDao().also { instance = it }
+        fun getInstance(context: Context): AppDatabase {
+            return instance ?: synchronized(this) {
+                instance ?: Room.databaseBuilder(
+                    context,
+                    AppDatabase::class.java,
+                    "basketball-db"
+                ).fallbackToDestructiveMigration().build().also { instance = it }
+            }
         }
     }
 }

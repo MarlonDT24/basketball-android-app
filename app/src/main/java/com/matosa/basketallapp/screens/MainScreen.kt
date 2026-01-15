@@ -1,5 +1,6 @@
 package com.matosa.basketallapp.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -8,21 +9,18 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import com.matosa.basketallapp.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(navController: NavController) {
-    val bottomNavController = rememberNavController()
     var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
@@ -30,25 +28,47 @@ fun MainScreen(navController: NavController) {
             TopAppBar(
                 title = {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "🏀",
-                            fontSize = 24.sp
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "FBCV",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E3A8A)
-                        )
+                        // Botón atrás
+                        if (selectedTab != 0) {
+                            IconButton(onClick = { selectedTab = 0 }) {
+                                Icon(
+                                    imageVector = Icons.Default.ArrowBack,
+                                    contentDescription = "Volver",
+                                    tint = Color.White
+                                )
+                            }
+                        } else {
+                            Spacer(modifier = Modifier.width(48.dp))
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.logo_letra),
+                                contentDescription = "FBCV Logo",
+                                modifier = Modifier
+                                    .height(40.dp)
+                                    .width(80.dp)
+                            )
+                        }
+
+                        // Botón home
+                        IconButton(onClick = { selectedTab = 0 }) {
+                            Icon(
+                                imageVector = Icons.Default.Home,
+                                contentDescription = "Inicio",
+                                tint = Color.White
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+                    containerColor = Color(0xFF1E3A8A)
                 )
             )
         },
@@ -79,13 +99,13 @@ fun MainScreen(navController: NavController) {
         when (selectedTab) {
             0 -> HomeContent(
                 modifier = Modifier.padding(paddingValues),
-                onNavigateToClubs = { navController.navigate("clubs") },
-                onNavigateToCompetitions = { navController.navigate("competitions") },
-                onNavigateToLiveMatches = { navController.navigate("live_matches") }
+                onNavigateToClubs = { selectedTab = 1 },
+                onNavigateToCompetitions = { selectedTab = 3 },
+                onNavigateToLiveMatches = { selectedTab = 2 }
             )
-            1 -> FavoritesContent(modifier = Modifier.padding(paddingValues))
-            2 -> NotificationsContent(modifier = Modifier.padding(paddingValues))
-            3 -> MenuContent(modifier = Modifier.padding(paddingValues))
+            1 -> ClubsScreen(modifier = Modifier.padding(paddingValues))
+            2 -> LiveMatchesScreen(modifier = Modifier.padding(paddingValues))
+            3 -> CompetitionsScreen(modifier = Modifier.padding(paddingValues))
         }
     }
 }
@@ -97,9 +117,9 @@ fun BottomNavigationBar(
 ) {
     val items = listOf(
         BottomNavItem("Inicio", Icons.Default.Home),
-        BottomNavItem("Favoritos", Icons.Default.Star),
-        BottomNavItem("Alertas", Icons.Default.Notifications),
-        BottomNavItem("Menú", Icons.Default.Menu)
+        BottomNavItem("Clubes", Icons.Default.Info),
+        BottomNavItem("Partidos", Icons.Default.PlayArrow),
+        BottomNavItem("Competiciones", Icons.Default.DateRange),
     )
 
     NavigationBar(
@@ -147,17 +167,18 @@ fun HomeContent(
         modifier = modifier
             .fillMaxSize()
             .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Botón Clubes
         MainMenuButton(
-            icon = "🏛️",
+            icon = "️🏀",
             title = "CLUBES",
             backgroundColor = Color(0xFFE5E7EB),
             onClick = onNavigateToClubs
         )
 
-        // Botón Competiciones
+        Spacer(modifier = Modifier.height(16.dp))
+
         MainMenuButton(
             icon = "🏆",
             title = "COMPETICIONES",
@@ -165,7 +186,8 @@ fun HomeContent(
             onClick = onNavigateToCompetitions
         )
 
-        // Botón Partidos en Directo
+        Spacer(modifier = Modifier.height(16.dp))
+
         MainMenuButton(
             icon = "📺",
             title = "PARTIDOS EN DIRECTO",
@@ -215,37 +237,6 @@ fun MainMenuButton(
                 )
             }
         }
-    }
-}
-
-// Contenido temporal para las otras pestañas
-@Composable
-fun FavoritesContent(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Favoritos - Próximamente")
-    }
-}
-
-@Composable
-fun NotificationsContent(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Notificaciones - Próximamente")
-    }
-}
-
-@Composable
-fun MenuContent(modifier: Modifier = Modifier) {
-    Box(
-        modifier = modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Text("Menú - Próximamente")
     }
 }
 

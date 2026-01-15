@@ -14,7 +14,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.matosa.basketallapp.presentation.viewmodel.AuthViewModel
 import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,9 +23,7 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel = view
     var isLogin by remember { mutableStateOf(true) }
 
     val authState by authViewModel.authState.observeAsState()
-    val context = LocalContext.current
 
-    // Cambios de estado
     LaunchedEffect(authState) {
         when (authState) {
             is AuthViewModel.AuthState.Success -> {
@@ -48,7 +45,6 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel = view
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Logo y título
         Text(
             text = "🏀",
             fontSize = 64.sp
@@ -86,7 +82,6 @@ fun AuthScreen(navController: NavController, authViewModel: AuthViewModel = view
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Mensajes de error
         authState?.let { state ->
             if (state is AuthViewModel.AuthState.Error) {
                 Text(
